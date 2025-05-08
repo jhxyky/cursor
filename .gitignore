@@ -1,0 +1,22 @@
+# 环境变量
+.env
+.env.*
+
+# Foundry 相关
+cache/
+out/
+
+# IDE 相关
+.vscode/
+.idea/
+
+# 系统文件
+.DS_Store
+
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Docs
+docs/
