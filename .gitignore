@@ -1,6 +1,6 @@
 # 环境变量
-.env
-.env.*
+#.env
+#.env.*
 
 # Foundry 相关
 cache/

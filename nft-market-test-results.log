@@ -28,3 +28,6 @@ Ran 6 tests for test/NFTMarketTest.sol:NFTMarketTest
 Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 37.43ms (38.25ms CPU time)
 
 Ran 3 test suites in 356.34ms (53.21ms CPU time): 16 tests passed, 0 failed, 0 skipped (16 total tests)
+
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR-PROJECT-ID
+PRIVATE_KEY=your-private-key-here
