@@ -37,16 +37,6 @@ async function main() {
         // 获取 NFT 合约实例
         const nftContract = new ethers.Contract(nftContractAddress, ERC721ABI, wallet);
         
-        // 检查 NFT 所有权
-        const owner = await nftContract.ownerOf(tokenId);
-        console.log("NFT 所有者:", owner);
-        console.log("当前钱包地址:", wallet.address);
-        
-        if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
-            throw new Error("您不是这个 NFT 的所有者");
-        }
-
-        // 批准 NFTMarket 合约转移 NFT
         console.log("正在批准 NFTMarket 合约转移 NFT...");
         const approveTx = await nftContract.approve(nftMarket.target, tokenId);
         await approveTx.wait();

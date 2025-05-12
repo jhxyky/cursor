@@ -11,17 +11,6 @@ export function ListNFT() {
     const [isApproving, setIsApproving] = useState(false);
     const [isListing, setIsListing] = useState(false);
 
-    // 检查 NFT 所有权
-    const { data: owner } = useReadContract({
-        address: NFTContractAddress,
-        abi: NFTMarketABI,
-        functionName: 'ownerOf',
-        args: [tokenId ? BigInt(tokenId) : BigInt(0)],
-        query: {
-            enabled: !!tokenId,
-        },
-    }) as { data: `0x${string}` | undefined };
-
     // 批准 NFTMarket 合约转移 NFT
     const { writeContract: approve, data: approveData } = useWriteContract();
 
@@ -77,63 +66,53 @@ export function ListNFT() {
         }
     };
 
-    const isOwner = owner && address && owner.toLowerCase() === address.toLowerCase();
-
     return (
         <div className="p-4 bg-white rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">上架 NFT</h2>
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Token ID</label>
+            <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Token ID
+                </label>
                     <input
                         type="number"
                         value={tokenId}
                         onChange={(e) => setTokenId(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        placeholder="输入 NFT 的 Token ID"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    placeholder="输入 NFT Token ID"
                     />
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">价格 (WETH)</label>
+            <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                    价格 (ETH)
+                </label>
                     <input
                         type="number"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         placeholder="输入价格"
                         step="0.01"
                     />
                 </div>
-                {!isOwner && tokenId && (
-                    <p className="text-red-500">您不是这个 NFT 的所有者</p>
-                )}
                 <div className="flex space-x-4">
                     <button
                         onClick={handleApprove}
-                        disabled={!tokenId || isApproving || isApprovingTx || !isOwner}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400"
+                    disabled={isApproving || isApprovingTx || !tokenId}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                     >
-                        {isApproving || isApprovingTx ? '批准中...' : '批准'}
+                    {isApproving || isApprovingTx ? '批准中...' : '批准 NFT'}
                     </button>
                     <button
                         onClick={handleList}
-                        disabled={!tokenId || !price || isListing || isListingTx || !isOwner}
-                        className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400"
+                    disabled={isListing || isListingTx || !tokenId || !price}
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                     >
-                        {isListing || isListingTx ? '上架中...' : '上架'}
+                    {isListing || isListingTx ? '上架中...' : '上架 NFT'}
                     </button>
-                </div>
-                {approveData && (
-                    <p className="text-sm text-gray-500">
-                        批准交易: {approveData}
-                    </p>
-                )}
-                {listData && (
-                    <p className="text-sm text-gray-500">
-                        上架交易: {listData}
-                    </p>
-                )}
             </div>
+            <p className="mt-4 text-sm text-gray-600">
+                注意：上架前请确保您已经获得了该 NFT 的转移授权。
+            </p>
         </div>
     );
 } 

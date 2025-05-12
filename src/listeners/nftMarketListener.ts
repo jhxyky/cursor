@@ -1,6 +1,9 @@
 import { createPublicClient, http, parseAbiItem } from 'viem';
 import { sepolia } from 'viem/chains';
 import dotenv from 'dotenv';
+import axios from 'axios';
+import { createWalletClient } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 
 dotenv.config();
 
@@ -10,6 +13,20 @@ const NFTMarketABI = [
     "event NFTPurchased(address indexed nftContract, uint256 indexed tokenId, address indexed buyer, address seller, address token, uint256 price)",
     "event NFTUnlisted(address indexed nftContract, uint256 indexed tokenId, address indexed seller)"
 ];
+
+// 调用 Java 接口保存事件数据
+async function saveEventToDatabase(eventType: string, eventData: any) {
+    try {
+        const response = await axios.post('http://localhost:8080/api/events', {
+            eventType,
+            ...eventData,
+            timestamp: new Date().toISOString()
+        });
+        console.log('事件数据保存成功:', response.data);
+    } catch (error) {
+        console.error('保存事件数据失败:', error);
+    }
+}
 
 async function main() {
     // 创建公共客户端
@@ -30,7 +47,7 @@ async function main() {
         onLogs: (logs) => {
             console.log('\n收到 NFT 上架事件!');
             logs.forEach((log) => {
-                console.log('事件详情:', {
+                const eventData = {
                     nftContract: log.args.nftContract,
                     tokenId: log.args.tokenId?.toString(),
                     seller: log.args.seller,
@@ -38,7 +55,9 @@ async function main() {
                     price: log.args.price ? Number(log.args.price) / 1e18 : '0',
                     blockNumber: log.blockNumber,
                     transactionHash: log.transactionHash
-                });
+                };
+                console.log('事件详情:', eventData);
+                saveEventToDatabase('NFT_LISTED', eventData);
             });
             console.log('-------------------');
         }
@@ -51,7 +70,7 @@ async function main() {
         onLogs: (logs) => {
             console.log('\n收到 NFT 购买事件!');
             logs.forEach((log) => {
-                console.log('事件详情:', {
+                const eventData = {
                     nftContract: log.args.nftContract,
                     tokenId: log.args.tokenId?.toString(),
                     buyer: log.args.buyer,
@@ -60,7 +79,9 @@ async function main() {
                     price: log.args.price ? Number(log.args.price) / 1e18 : '0',
                     blockNumber: log.blockNumber,
                     transactionHash: log.transactionHash
-                });
+                };
+                console.log('事件详情:', eventData);
+                saveEventToDatabase('NFT_PURCHASED', eventData);
             });
             console.log('-------------------');
         }
@@ -73,13 +94,15 @@ async function main() {
         onLogs: (logs) => {
             console.log('\n收到 NFT 取消上架事件!');
             logs.forEach((log) => {
-                console.log('事件详情:', {
+                const eventData = {
                     nftContract: log.args.nftContract,
                     tokenId: log.args.tokenId?.toString(),
                     seller: log.args.seller,
                     blockNumber: log.blockNumber,
                     transactionHash: log.transactionHash
-                });
+                };
+                console.log('事件详情:', eventData);
+                saveEventToDatabase('NFT_UNLISTED', eventData);
             });
             console.log('-------------------');
         }
@@ -107,6 +130,33 @@ async function main() {
         cleanup();
         process.exit(0);
     });
+}
+
+const account = privateKeyToAccount('你的私钥'); // 用你自己的私钥
+const walletClient = createWalletClient({
+    account,
+    chain: sepolia,
+    transport: http('https://rpc.sepolia.org'),
+});
+
+const nftAddress = '0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9';
+
+async function mint() {
+    const hash = await walletClient.writeContract({
+        address: nftAddress,
+        abi: [
+            {
+                "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
+                "name": "mint",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ],
+        functionName: 'mint',
+        args: ['0x353a4F1a2bD8Ed73305dfB8FBD998271465bf367'],
+    });
+    console.log('mint tx hash:', hash);
 }
 
 main().catch((error) => {
