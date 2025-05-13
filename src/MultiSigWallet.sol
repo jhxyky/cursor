@@ -25,7 +25,7 @@ contract MultiSigWallet {
 
     // 交易结构体
     struct Transaction {
-        address to;      // 目标地址
+        address to;      // 目标地址  是啥
         uint value;      // 转账金额
         bytes data;      // 调用数据
         bool executed;   // 是否已执行
