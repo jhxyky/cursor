@@ -9,7 +9,7 @@ contract MultiSigWallet {
         address indexed owner,
         uint indexed txIndex,
         address indexed to,
-        uint value,
+        uint value,    
         bytes data
     );
     event ConfirmTransaction(address indexed owner, uint indexed txIndex);
@@ -18,7 +18,7 @@ contract MultiSigWallet {
 
     // 多签持有人地址数组
     address[] public owners;
-    // 地址是否为多签持有人的映射
+    // 地址是否为多签持有人的映射 映射
     mapping(address => bool) public isOwner;
     // 需要的确认数（门槛）
     uint public numConfirmationsRequired;
