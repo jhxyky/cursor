@@ -6,6 +6,7 @@ import "../src/JiaoToken.sol";
 import "../src/TokenBank.sol";
 import "../src/JiaoNFT.sol";
 import "../src/JiaoNFTMarket.sol";
+import "./mocks/MockPermit2.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
@@ -17,6 +18,7 @@ contract TokenPermitTest is Test {
     TokenBank public bank;
     JiaoNFT public nft;
     JiaoNFTMarket public market;
+    MockPermit2 public permit2;
     
     address public owner = address(1);
     address public user1 = address(2);
@@ -33,7 +35,8 @@ contract TokenPermitTest is Test {
         
         // 部署合约
         token = new JiaoToken();
-        bank = new TokenBank(address(token));
+        permit2 = new MockPermit2();
+        bank = new TokenBank(address(token), address(permit2));
         nft = new JiaoNFT();
         market = new JiaoNFTMarket(whitelistSigner);
         
@@ -98,6 +101,39 @@ contract TokenPermitTest is Test {
         console.log("User Address:", user);
         console.log("Deposit Amount:", amount / 1e18, "JIAO");
         console.log("Bank Contract Balance:", token.balanceOf(address(bank)) / 1e18, "JIAO");
+    }
+    
+    // 测试使用Permit2进行代币授权存款
+    function testDepositWithPermit2() public {
+        uint256 amount = 200 * 10**18;
+        uint256 nonce = 123456789;
+        uint256 deadline = block.timestamp + 1 hours;
+        
+        // 准备一个模拟签名
+        bytes memory mockSignature = new bytes(65);
+        permit2.setValidSignature(mockSignature);
+        
+        // 用户批准代币给Permit2合约
+        vm.startPrank(user1);
+        token.approve(address(permit2), amount);
+        
+        // 执行Permit2存款
+        bank.depositWithPermit2(
+            nonce,
+            deadline,
+            amount,
+            mockSignature
+        );
+        vm.stopPrank();
+        
+        // 验证存款结果
+        assertEq(bank.balanceOf(user1), amount);
+        assertEq(token.balanceOf(address(bank)), amount);
+        
+        // 输出日志，显示Permit2存款结果
+        console.log("User Address (Permit2):", user1);
+        console.log("Deposit Amount (Permit2):", amount / 1e18, "JIAO");
+        console.log("Bank Contract Balance (Permit2):", token.balanceOf(address(bank)) / 1e18, "JIAO");
     }
     
     // 测试白名单授权购买NFT

@@ -1,6 +1,7 @@
 import React from 'react';
 import ConnectWallet from './components/ConnectWallet';
 import SIWEAuth from './components/SIWEAuth';
+import TokenBankFrontend from './components/TokenBankFrontend';
 import NFTMarketplace from './components/NFTMarketplace';
 import { useAccount } from 'wagmi';
 
@@ -14,10 +15,13 @@ function App() {
           <div className="mx-auto">
             <div className="mb-6 flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">NFT市场应用</h1>
-              <ConnectWallet />
+              <div className="mt-4 flex space-x-4">
+                <ConnectWallet />
+                <SIWEAuth />
+              </div>
             </div>
             
-            {isConnected && <SIWEAuth />}
+            {isConnected && <TokenBankFrontend />}
             
             <div className="divide-y divide-gray-200">
               <div className="py-8 text-base leading-6 space-y-8 text-gray-700 sm:text-lg sm:leading-7">

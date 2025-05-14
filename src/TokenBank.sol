@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./interfaces/IPermit2.sol";
 
 /**
  * @title TokenBank
@@ -15,11 +16,15 @@ contract TokenBank is Ownable, ReentrancyGuard {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public lastDepositTimestamp;
     
+    // Permit2合约地址
+    address public immutable permit2;
+    
     event Deposit(address indexed user, uint256 amount, uint256 timestamp);
     event Withdraw(address indexed user, uint256 amount, uint256 timestamp);
 
-    constructor(address _token) Ownable(msg.sender) {
+    constructor(address _token, address _permit2) Ownable(msg.sender) {
         token = IERC20(_token);
+        permit2 = _permit2;
     }
 
     /**
@@ -64,6 +69,52 @@ contract TokenBank is Ownable, ReentrancyGuard {
         
         // 转账代币到合约
         token.transferFrom(msg.sender, address(this), amount);
+        
+        // 更新余额和时间戳
+        balances[msg.sender] += amount;
+        lastDepositTimestamp[msg.sender] = block.timestamp;
+        
+        emit Deposit(msg.sender, amount, block.timestamp);
+    }
+    
+    /**
+     * @dev 使用Permit2进行授权存款
+     * @param nonce 随机数
+     * @param deadline 签名截止时间
+     * @param amount 存款金额
+     * @param signature permit2签名
+     */
+    function depositWithPermit2(
+        uint256 nonce,
+        uint256 deadline,
+        uint256 amount,
+        bytes calldata signature
+    ) external nonReentrant {
+        require(amount > 0, "Amount must be greater than 0");
+        require(permit2 != address(0), "Permit2 not configured");
+        
+        // 构建Permit2所需的数据结构
+        IPermit2.PermitTransferFrom memory permit = IPermit2.PermitTransferFrom({
+            permitted: IPermit2.TokenPermissions({
+                token: address(token),
+                amount: amount
+            }),
+            nonce: nonce,
+            deadline: deadline
+        });
+        
+        IPermit2.SignatureTransferDetails memory transferDetails = IPermit2.SignatureTransferDetails({
+            to: address(this),
+            requestedAmount: amount
+        });
+        
+        // 调用Permit2合约执行授权转账
+        IPermit2(permit2).permitTransferFrom(
+            permit,
+            transferDetails,
+            msg.sender,
+            signature
+        );
         
         // 更新余额和时间戳
         balances[msg.sender] += amount;

@@ -12,7 +12,7 @@ contract JiaoToken is ERC20Permit, Ownable {
     constructor() ERC20("JiaoToken", "JIAO") ERC20Permit("JiaoToken") Ownable(msg.sender) {
         _mint(msg.sender, 1000000 * 10**18); // 铸造1,000,000个代币
     }
-    
+   
     /**
      * @dev 铸造新的代币
      * @param to 接收者地址
@@ -21,6 +21,4 @@ contract JiaoToken is ERC20Permit, Ownable {
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
-
-    function permitBuy(address nftContract, uint256 tokenId, uint256 deadline, bytes memory signature) external
-} 
+}
