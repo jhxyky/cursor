@@ -1,0 +1,55 @@
+No files changed, compilation skipped
+
+Ran 3 tests for test/TokenPermitTest.t.sol:TokenPermitTest
+[PASS] testPermitBuyNFT() (gas: 291814)
+Logs:
+  NFT ID: 0
+  NFT New Owner: 0x0000000000000000000000000000000000000002
+  Seller Address: 0x0000000000000000000000000000000000000001
+  NFT Price: 50 JIAO
+  Buyer Balance Change: 50 JIAO
+  Seller Balance Change: 50 JIAO
+
+[PASS] testPermitDeposit() (gas: 164356)
+Logs:
+  User Address: 0x0376AAc07Ad725E01357B1725B5ceC61aE10473c
+  Deposit Amount: 100 JIAO
+  Bank Contract Balance: 100 JIAO
+
+[PASS] testRevert_NonWhitelistBuy() (gas: 236202)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 1.49ms (1.72ms CPU time)
+
+Ran 8 tests for test/BankTest.sol:BankTest
+[PASS] testAdminWithdraw() (gas: 88769)
+[PASS] testBigBankMinimumDeposit() (gas: 73428)
+[PASS] testDepositUpdatesBalance() (gas: 64766)
+[PASS] testDepositZeroAmount() (gas: 11472)
+[PASS] testOnlyAdminCanWithdraw() (gas: 80121)
+[PASS] testTopUsersEdgeCases() (gas: 123236)
+[PASS] testTopUsersRanking() (gas: 250213)
+[PASS] testTransferAdmin() (gas: 24097)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 1.51ms (1.33ms CPU time)
+
+Ran 5 tests for test/MultiSigWallet.t.sol:MultiSigWalletTest
+[PASS] testConfirmTransaction() (gas: 176287)
+[PASS] testConstructor() (gas: 49842)
+[PASS] testExecuteTransaction() (gas: 240286)
+[PASS] testRevokeConfirmation() (gas: 116019)
+[PASS] testSubmitTransaction() (gas: 108738)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 1.56ms (495.63µs CPU time)
+
+Ran 2 tests for test/Counter.t.sol:CounterTest
+[PASS] testFuzz_SetNumber(uint256) (runs: 256, μ: 32043, ~: 32354)
+[PASS] test_Increment() (gas: 31851)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 4.95ms (4.65ms CPU time)
+
+Ran 6 tests for test/NFTMarketTest.sol:NFTMarketTest
+[PASS] testFuzzListAndPurchase(uint256,address) (runs: 256, μ: 233974, ~: 234039)
+[PASS] testListNFT() (gas: 163621)
+[PASS] testListNFTFailures() (gas: 52155)
+[PASS] testNoTokenBalance() (gas: 210748)
+[PASS] testPurchaseNFT() (gas: 220174)
+[PASS] testPurchaseNFTFailures() (gas: 240527)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 32.23ms (32.58ms CPU time)
+
+Ran 5 test suites in 289.14ms (41.74ms CPU time): 24 tests passed, 0 failed, 0 skipped (24 total tests)
