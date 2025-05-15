@@ -12,7 +12,7 @@ export default defineConfig({
     },
     watch: {
       usePolling: false,
-      interval: 100,
+      interval: 1000,
     },
   },
   build: {
@@ -30,8 +30,8 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'wagmi', 'viem'],
-    exclude: ['@tanstack/react-query'],
+    include: ['react', 'react-dom', 'wagmi', 'viem', '@web3modal/wagmi', '@tanstack/react-query'],
+    exclude: [],
   },
   esbuild: {
     target: 'esnext',
