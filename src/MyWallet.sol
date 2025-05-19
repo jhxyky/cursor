@@ -9,8 +9,8 @@ contract MyWallet {
     modifier auth {
         address currentOwner;
         assembly {
-            // 从 slot 3 读取 owner 地址
-            currentOwner := sload(3)
+            // owner 始终在 slot 2
+            currentOwner := sload(2)
         }
         require(msg.sender == currentOwner, "Not authorized");
         _;
@@ -19,24 +19,22 @@ contract MyWallet {
     constructor(string memory _name) {
         name = _name;
         assembly {
-            // 将 msg.sender 存储到 slot 3
-            sstore(3, caller())
+            // owner 始终存储在 slot 2
+            sstore(2, caller())
         }
     } 
 
     function transferOwernship(address _addr) public auth {
         require(_addr != address(0), "New owner is the zero address");
-        
         address currentOwner;
         assembly {
-            // 从 slot 3 读取当前 owner
-            currentOwner := sload(3)
+            // owner 始终在 slot 2
+            currentOwner := sload(2)
         }
         require(currentOwner != _addr, "New owner is the same as the old owner");
-        
         assembly {
-            // 将新 owner 地址存储到 slot 3
-            sstore(3, _addr)
+            // owner 始终存储在 slot 2
+            sstore(2, _addr)
         }
     }
 } 
