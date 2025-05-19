@@ -8,7 +8,9 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "wallet": "tsx scripts/viemWallet.ts"
+    "wallet": "tsx scripts/viemWallet.ts",
+    "read-locks": "tsx scripts/readEsRNTLocks.ts",
+    "save-locks": "tsx scripts/saveEsRNTLocks.ts"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.17.0",

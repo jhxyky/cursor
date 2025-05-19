@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>esRNT 合约存储读取器</title>
+    <script type="module">
+        // 导入 Viem
+        import { createPublicClient, http, getAddress, formatEther, parseEther, pad, keccak256 } from 'https://esm.sh/viem@1.21.4';
+        import { mainnet, sepolia } from 'https://esm.sh/viem@1.21.4/chains';
+
+        // 初始化页面
+        window.onload = function() {
+            document.getElementById('readBtn').addEventListener('click', readContractStorage);
+            
+            // 链选择器
+            const chainSelect = document.getElementById('chain');
+            chainSelect.addEventListener('change', function() {
+                if (chainSelect.value === 'mainnet') {
+                    document.getElementById('rpcUrl').value = 'https://eth.llamarpc.com';
+                } else if (chainSelect.value === 'sepolia') {
+                    document.getElementById('rpcUrl').value = 'https://rpc.sepolia.org';
+                } else if (chainSelect.value === 'localhost') {
+                    document.getElementById('rpcUrl').value = 'http://localhost:8545';
+                }
+            });
+            
+            // 默认设置
+            chainSelect.value = 'localhost';
+            document.getElementById('rpcUrl').value = 'http://localhost:8545';
+            document.getElementById('contractAddress').value = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // 本地部署的合约地址
+        };
+
+        async function readContractStorage() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>正在读取合约存储...</p>';
+            
+            try {
+                const contractAddress = document.getElementById('contractAddress').value;
+                const rpcUrl = document.getElementById('rpcUrl').value;
+                const chainName = document.getElementById('chain').value;
+                
+                // 验证合约地址
+                if (!contractAddress || !contractAddress.startsWith('0x') || contractAddress.length !== 42) {
+                    throw new Error('请输入有效的合约地址');
+                }
+                
+                // 选择链
+                let chain;
+                if (chainName === 'mainnet') {
+                    chain = mainnet;
+                } else if (chainName === 'sepolia') {
+                    chain = sepolia;
+                } else {
+                    chain = {
+                        id: 31337,
+                        name: 'Localhost',
+                        network: 'localhost',
+                        nativeCurrency: {
+                            name: 'Ether',
+                            symbol: 'ETH',
+                            decimals: 18
+                        },
+                        rpcUrls: {
+                            default: { http: [rpcUrl] },
+                            public: { http: [rpcUrl] }
+                        }
+                    };
+                }
+                
+                // 创建客户端
+                const client = createPublicClient({
+                    chain,
+                    transport: http(rpcUrl)
+                });
+                
+                // 读取数组长度，存储在 slot 0
+                const lengthHex = await client.getStorageAt({
+                    address: contractAddress,
+                    slot: '0x0000000000000000000000000000000000000000000000000000000000000000'
+                });
+                
+                // 将十六进制转换为数字
+                const length = parseInt(lengthHex || '0x0', 16);
+                
+                let outputHtml = `<h3>esRNT 合约 (${contractAddress})</h3>`;
+                outputHtml += `<p>_locks 数组长度: ${length}</p>`;
+                
+                // 计算数组存储的起始位置 (keccak256(slot))
+                const baseSlot = keccak256(
+                    pad('0x0000000000000000000000000000000000000000000000000000000000000000', { size: 32 })
+                );
+                
+                // 读取每个锁定信息
+                for (let i = 0; i < length; i++) {
+                    // 每个结构体占用 3 个槽位
+                    const baseIndex = BigInt(i) * 3n;
+                    const currentSlot = (BigInt('0x' + baseSlot.slice(2)) + baseIndex).toString(16);
+                    
+                    // 读取 user 地址
+                    const userSlot = '0x' + currentSlot.padStart(64, '0');
+                    const userHex = await client.getStorageAt({
+                        address: contractAddress,
+                        slot: userSlot
+                    });
+                    const user = getAddress('0x' + (userHex || '0x0').slice(-40));
+                    
+                    // 读取 startTime
+                    const timeSlot = '0x' + (BigInt('0x' + currentSlot) + 1n).toString(16).padStart(64, '0');
+                    const timeHex = await client.getStorageAt({
+                        address: contractAddress,
+                        slot: timeSlot
+                    });
+                    const startTime = parseInt(timeHex || '0x0', 16);
+                    const startTimeDate = new Date(startTime * 1000).toLocaleString();
+                    
+                    // 读取 amount
+                    const amountSlot = '0x' + (BigInt('0x' + currentSlot) + 2n).toString(16).padStart(64, '0');
+                    const amountHex = await client.getStorageAt({
+                        address: contractAddress,
+                        slot: amountSlot
+                    });
+                    const amount = formatEther(BigInt(amountHex || '0x0'));
+                    
+                    outputHtml += `<div class="lock-item">
+                        <p><strong>locks[${i}]:</strong></p>
+                        <ul>
+                            <li>user: ${user}</li>
+                            <li>startTime: ${startTime} (${startTimeDate})</li>
+                            <li>amount: ${amount} ETH</li>
+                        </ul>
+                    </div>`;
+                }
+                
+                resultDiv.innerHTML = outputHtml;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">错误: ${error.message}</p>`;
+                console.error('读取合约存储时出错:', error);
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h3 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .lock-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+        }
+        .code {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>esRNT 合约存储读取器</h1>
+    <p>使用 Viem 从链上读取 esRNT 合约中 _locks 数组的所有元素</p>
+    
+    <div class="form-group">
+        <label for="chain">选择链:</label>
+        <select id="chain">
+            <option value="localhost">本地链 (localhost)</option>
+            <option value="sepolia">Sepolia 测试网</option>
+            <option value="mainnet">以太坊主网</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="rpcUrl">RPC URL:</label>
+        <input type="text" id="rpcUrl" placeholder="例如: http://localhost:8545">
+    </div>
+    
+    <div class="form-group">
+        <label for="contractAddress">合约地址:</label>
+        <input type="text" id="contractAddress" placeholder="例如: 0x1234...">
+    </div>
+    
+    <button id="readBtn">读取 _locks 数组</button>
+    
+    <div id="result">
+        <p>点击按钮从链上读取 _locks 数组</p>
+    </div>
+    
+    <div class="code">
+        <h3>Solidity 合约结构</h3>
+        <pre>
+contract esRNT {
+    struct LockInfo {
+        address user;
+        uint64 startTime; 
+        uint256 amount;
+    }
+    
+    LockInfo[] private _locks;
+
+    constructor() { 
+        for (uint256 i = 0; i < 11; i++) {
+            _locks.push(LockInfo(
+                address(uint160(i + 1)), 
+                uint64(block.timestamp + i),
+                1e18 * (i + 1)
+            ));
+        }
+    }
+}
+        </pre>
+    </div>
+</body>
+</html> 
